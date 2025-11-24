@@ -19,12 +19,6 @@ api_credentials.json
 5_tests/output/menu.json
 5_tests/output/formatted_text.txt
 
-# === SPRINT 2 Dosyaları (Geçici) ===
-3_scripts/text_formatter.py
-3_scripts/image_generator.py
-3_scripts/main.py
-2_assets/template_example.png
-
 # IDE
 .vscode/
 .idea/
