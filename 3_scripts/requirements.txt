@@ -1,0 +1,22 @@
+# Python 3.10.11 için optimize edilmiş bağımlılıklar
+
+# Web Scraping
+requests==2.31.0
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# Image Processing
+Pillow==10.0.1
+
+# Data Handling
+python-dateutil==2.8.2
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# JSON İşlemleri
+jsonschema==4.19.1
+
+# Testing
+pytest==7.4.3
+pytest-mock==3.12.0

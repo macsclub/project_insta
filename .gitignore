@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+3_scripts/venv/
+
+# Credentials
+api_credentials.json
+.env
+
+# Test outputs
+5_tests/output/*.png
+5_tests/output/*.jpg
+5_tests/output/menu.json
+5_tests/output/formatted_text.txt
+
+# === SPRINT 2 Dosyaları (Geçici) ===
+3_scripts/text_formatter.py
+3_scripts/image_generator.py
+3_scripts/main.py
+2_assets/template_example.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# n8n
+.n8n/
+
+# Logs
+*.log
