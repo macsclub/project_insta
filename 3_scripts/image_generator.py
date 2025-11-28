@@ -9,10 +9,10 @@ import sys
 
 class ImageGenerator:
     def __init__(self, template_path=None, output_path='../5_tests/output/story.png'):
-        self.template_path = template_path or '../2_assets/template_example.png'
+        self.template_path = template_path or '../2_assets/kaynak_gorsel.jpg'
         self.output_path = output_path
-        self.width = 1080
-        self.height = 1920
+        self.width = 900
+        self.height = 1600
         
     def create_template(self):
         """Örnek şablon oluşturur (gerçek şablon yoksa)"""
@@ -81,10 +81,10 @@ class ImageGenerator:
         # Font ayarları
         try:
             if font_path and os.path.exists(font_path):
-                font = ImageFont.truetype(font_path, 50)
+                font = ImageFont.truetype(font_path, 40)
             else:
                 # Windows'ta Arial kullan
-                font = ImageFont.truetype("arial.ttf", 50)
+                font = ImageFont.truetype("arial.ttf", 40)
         except:
             print("⚠️  Font yüklenemedi, varsayılan font kullanılıyor")
             font = ImageFont.load_default()
@@ -92,9 +92,9 @@ class ImageGenerator:
         # Metni satırlara böl
         lines = text.split('\n')
         
-        # Başlangıç pozisyonu (ortada, yukarıdan biraz aşağıda)
-        y_start = 400
-        line_height = 70
+        # Başlangıç pozisyonu (ortadaki beyaz alan)
+        y_start = 550
+        line_height = 55
         
         for line in lines:
             if not line.strip():
@@ -106,10 +106,10 @@ class ImageGenerator:
             text_width = bbox[2] - bbox[0]
             text_x = (self.width - text_width) // 2
             
-            # Gölge efekti (opsiyonel, okunabilirliği artırır)
-            draw.text((text_x + 2, y_start + 2), line, fill='black', font=font)
-            # Asıl metin
-            draw.text((text_x, y_start), line, fill='white', font=font)
+            # Gölge efekti (beyaz alan için hafif gri)
+            draw.text((text_x + 1, y_start + 1), line, fill=(200, 200, 200), font=font)
+            # Asıl metin (siyah - beyaz alan için)
+            draw.text((text_x, y_start), line, fill=(0, 0, 0), font=font)
             
             y_start += line_height
         
@@ -128,7 +128,7 @@ class ImageGenerator:
         img.save(self.output_path, quality=95)
         
         print(f"✅ Görsel oluşturuldu: {self.output_path}")
-        print(f"   Boyut: {self.width}x{self.height}")
+        print(f"   Boyut: {self.width}x{self.height} (Instagram Story)")
         
         return self.output_path
 
