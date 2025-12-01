@@ -4,40 +4,54 @@ Bu klasör n8n workflow JSON dosyalarını içerir.
 
 ## Dosyalar
 
-- `workflow_v1.json` - Ana Instagram menü otomasyon workflow'u
+- `workflow.json` - Instagram menü otomasyon workflow'u
 
 ## Workflow İçe Aktarma
 
 1. n8n arayüzünü aç (http://localhost:5678)
-2. Sol üst → "Import from File"
-3. `workflow_v1.json` dosyasını seç
-4. Credentials'ları ayarla
-5. Workflow'u aktifleştir
+2. Sol menüden "Workflows" → "Add Workflow"
+3. Sağ üst "..." menüsünden "Import from File"
+4. `workflow.json` dosyasını seç
+5. **ÖNEMLİ:** Aşağıdaki değerleri kendi bilgilerinle değiştir:
+   - `YOUR_INSTAGRAM_USER_ID` → Instagram Business Account ID
+   - `YOUR_PAGE_ACCESS_TOKEN` → Facebook Page Access Token
+6. Workflow'u kaydet ve aktifleştir
 
 ## Workflow Yapısı
 
 ```
-Cron Trigger (09:30, Pazartesi-Cuma)
+Schedule Trigger (08:30, Pazartesi-Cuma)
     ↓
-HTTP Request (Menü sitesini çek)
+HTTP Request (Python API - generate-story-public)
     ↓
-Function (HTML parse ve menü ayıkla)
+IF (success == true)
     ↓
-Function (Metin formatla)
+HTTP Request (Instagram API - Media Container)
     ↓
-Read Binary File (Template PNG)
-    ↓
-Python Script (Görsel oluştur)
-    ↓
-Instagram Graph API (Media Upload)
-    ↓
-Instagram Graph API (Publish Story)
-    ↓
-[Opsiyonel] Discord Webhook (Bildirim)
+HTTP Request (Instagram API - Publish Story)
 ```
 
-## Notlar
+## Gerekli API Anahtarları
 
-- Workflow henüz oluşturulmadı. AŞAMA 4'te eklenecek.
-- Test için önce manuel execution yapın
-- Cron'u aktifleştirmeden önce tüm adımları test edin
+Bu değerleri n8n workflow'unda elle girmeniz gerekiyor:
+
+| Değişken | Nereden Alınır |
+|----------|----------------|
+| `YOUR_INSTAGRAM_USER_ID` | Facebook Business Suite → Instagram → Settings |
+| `YOUR_PAGE_ACCESS_TOKEN` | Facebook Graph API Explorer |
+
+## Token Yenileme
+
+Page Access Token ~60 gün geçerlidir. Yenilemek için:
+
+```bash
+cd 3_scripts
+python refresh_token.py
+```
+
+## Test
+
+1. n8n'de workflow'u aç
+2. "Test Workflow" butonuna tıkla
+3. Tüm adımların başarılı olduğunu kontrol et
+4. Instagram hesabında story'nin paylaşıldığını doğrula
