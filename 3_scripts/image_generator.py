@@ -8,7 +8,12 @@ import sys
 
 # Config'den ayarları al
 try:
-    from config import FONT_PATH, FONT_SIZE, IMAGE_WIDTH, IMAGE_HEIGHT, ASSETS_DIR, TEMPLATE_PATH, LINE_SPACING
+    from config import (
+        FONT_PATH, FONT_SIZE, IMAGE_WIDTH, IMAGE_HEIGHT, 
+        ASSETS_DIR, TEMPLATE_PATH, LINE_SPACING,
+        TEXT_AREA_WIDTH, TEXT_AREA_HEIGHT, TEXT_AREA_CENTER_X, 
+        TEXT_AREA_CENTER_Y, TEXT_PADDING, WRAP_SPACING_RATIO
+    )
 except ImportError:
     FONT_PATH = None
     FONT_SIZE = 140
@@ -16,7 +21,16 @@ except ImportError:
     IMAGE_HEIGHT = 3840
     ASSETS_DIR = '../2_assets'
     TEMPLATE_PATH = os.path.join(ASSETS_DIR, 'kaynak_gorsel.png')
-    LINE_SPACING = 200
+    LINE_SPACING = 180
+    TEXT_AREA_WIDTH = 1221
+    TEXT_AREA_HEIGHT = 1645
+    TEXT_AREA_CENTER_X = 1069
+    TEXT_AREA_CENTER_Y = 2093
+    TEXT_PADDING = 60
+    WRAP_SPACING_RATIO = 0.65
+
+# Font cache - her seferinde yeniden yüklemeyi önler
+_font_cache = {}
 
 
 class ImageGenerator:
@@ -25,6 +39,53 @@ class ImageGenerator:
         self.output_path = output_path
         self.width = IMAGE_WIDTH
         self.height = IMAGE_HEIGHT
+    
+    def _get_cached_font(self, size, custom_path=None):
+        """Font'u cache'den al veya yükle"""
+        cache_key = f"{custom_path or FONT_PATH}_{size}"
+        
+        if cache_key in _font_cache:
+            return _font_cache[cache_key]
+        
+        font = self._load_font(size, custom_path)
+        _font_cache[cache_key] = font
+        print(f"   ✓ Font yüklendi ve cache'lendi: {FONT_PATH}")
+        return font
+    
+    def _load_font(self, size, custom_path=None):
+        """Font yükle - fallback zincirleme"""
+        # 1. Custom path
+        if custom_path and os.path.exists(custom_path):
+            try:
+                return ImageFont.truetype(custom_path, size)
+            except Exception:
+                pass
+        
+        # 2. Config font
+        if FONT_PATH and os.path.exists(FONT_PATH):
+            try:
+                return ImageFont.truetype(FONT_PATH, size)
+            except Exception:
+                pass
+        
+        # 3. Windows fallback
+        for win_font in ['C:/Windows/Fonts/arial.ttf', 'arial.ttf']:
+            try:
+                return ImageFont.truetype(win_font, size)
+            except Exception:
+                continue
+        
+        # 4. Linux fallback
+        for linux_font in [
+            '/app/assets/LeagueSpartan-SemiBold.ttf',
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+        ]:
+            try:
+                return ImageFont.truetype(linux_font, size)
+            except Exception:
+                continue
+        
+        return ImageFont.load_default()
         
     def create_template(self):
         """Örnek şablon oluşturur (gerçek şablon yoksa)"""
@@ -95,71 +156,25 @@ class ImageGenerator:
         """Görsel üzerine metin yazar - 2160x3840 template için optimize edildi"""
         draw = ImageDraw.Draw(img)
         
-        # Beyaz alan (2160x3840 template için)
-        # Boyut: 1221 x 1645, Orta nokta: 1069 x 2093
-        text_area_width = 1221
-        text_area_height = 1645
-        text_area_center_x = 1069
-        text_area_center_y = 2093
+        # Beyaz alan - config'den al
+        text_area_width = TEXT_AREA_WIDTH
+        text_area_height = TEXT_AREA_HEIGHT
+        text_area_center_x = TEXT_AREA_CENTER_X
+        text_area_center_y = TEXT_AREA_CENTER_Y
         
-        # Alan sınırları
-        text_area_x_start = text_area_center_x - (text_area_width // 2)  # 458
-        text_area_y_start = text_area_center_y - (text_area_height // 2)  # 1270
+        # Maksimum yazı genişliği
+        max_text_width = text_area_width - (TEXT_PADDING * 2)
         
-        # Maksimum yazı genişliği (beyaz alan - biraz padding)
-        padding = 60
-        max_text_width = text_area_width - (padding * 2)  # ~1101 px
-        
-        # Font ayarları - config'den veya parametre olarak
-        font = None
+        # Font ayarları - cache kullan
         font_size = FONT_SIZE
-        
-        # Font yükleme fonksiyonu
-        def load_font(size):
-            # 1. Parametre olarak verilen font
-            if font_path and os.path.exists(font_path):
-                try:
-                    return ImageFont.truetype(font_path, size)
-                except Exception:
-                    pass
-            
-            # 2. Config'deki font (LeagueSpartan-SemiBold)
-            if FONT_PATH and os.path.exists(FONT_PATH):
-                try:
-                    return ImageFont.truetype(FONT_PATH, size)
-                except Exception:
-                    pass
-            
-            # 3. Windows fallback
-            for win_font in ['C:/Windows/Fonts/LeagueSpartan-SemiBold.ttf', 'arial.ttf', 'C:/Windows/Fonts/arial.ttf']:
-                try:
-                    return ImageFont.truetype(win_font, size)
-                except Exception:
-                    continue
-            
-            # 4. Linux fallback
-            linux_fonts = [
-                '/app/assets/LeagueSpartan-SemiBold.ttf',
-                '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-                '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-            ]
-            for linux_font in linux_fonts:
-                try:
-                    return ImageFont.truetype(linux_font, size)
-                except Exception:
-                    continue
-            
-            return ImageFont.load_default()
-        
-        font = load_font(font_size)
-        print(f"   ✓ Font yüklendi: {FONT_PATH}")
+        font = self._get_cached_font(font_size, font_path)
         
         # Metni satırlara böl (her satır bir yemek)
         original_lines = [line.strip() for line in text.split('\n') if line.strip()]
         
         # Satır aralıkları
-        food_spacing = LINE_SPACING  # Yemekler arası (büyük boşluk)
-        wrap_spacing = int(LINE_SPACING * 0.65)  # Kaydırılmış satırlar arası (küçük boşluk)
+        food_spacing = LINE_SPACING
+        wrap_spacing = int(LINE_SPACING * WRAP_SPACING_RATIO)
         
         # Her yemek için satırları hazırla (gerekirse wrap)
         # Yapı: [(satır_metni, is_continuation), ...]

@@ -67,10 +67,14 @@ FONT_SIZE = int(os.environ.get('FONT_SIZE', 120))
 FONT_COLOR = (0, 0, 0)  # Siyah
 
 # Metin pozisyon ayarları - 2160x3840 template için
-# Yazılar template'in ortasında, dikey olarak merkezlenecek
-TEXT_START_X = int(os.environ.get('TEXT_START_X', 0))  # Yatay ortalama için 0
-TEXT_START_Y = int(os.environ.get('TEXT_START_Y', 1600))  # Dikey başlangıç
-LINE_SPACING = int(os.environ.get('LINE_SPACING', 180))  # Satır aralığı
+# Beyaz alan koordinatları (merkez ve boyut)
+TEXT_AREA_WIDTH = int(os.environ.get('TEXT_AREA_WIDTH', 1221))
+TEXT_AREA_HEIGHT = int(os.environ.get('TEXT_AREA_HEIGHT', 1645))
+TEXT_AREA_CENTER_X = int(os.environ.get('TEXT_AREA_CENTER_X', 1069))
+TEXT_AREA_CENTER_Y = int(os.environ.get('TEXT_AREA_CENTER_Y', 2093))
+TEXT_PADDING = int(os.environ.get('TEXT_PADDING', 60))
+LINE_SPACING = int(os.environ.get('LINE_SPACING', 180))  # Yemekler arası
+WRAP_SPACING_RATIO = float(os.environ.get('WRAP_SPACING_RATIO', 0.65))  # Devam satırları oranı
 
 # API ayarları
 API_BASE_URL = os.environ.get('API_BASE_URL', 'http://localhost:8000')

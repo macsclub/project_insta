@@ -122,71 +122,80 @@ async def get_menu():
         raise HTTPException(status_code=500, detail=f"Menü çekme hatası: {str(e)}")
 
 
+# ============================================================
+# HELPER FUNCTIONS
+# ============================================================
+
+async def _create_story_image():
+    """
+    Ortak story oluşturma fonksiyonu - DRY prensibi
+    Returns: (success, data_dict, error_message)
+    """
+    import shutil
+    
+    # ADIM 1: Menüyü çek
+    print("   📥 Menü çekiliyor...")
+    scraper = MenuScraper()
+    menu_data = scraper.get_todays_menu()
+    
+    if not menu_data:
+        return False, None, "Menü çekilemedi. Site erişilemez veya hafta sonu olabilir."
+    
+    tarih = menu_data.get('tarih', 'Bilinmiyor')
+    print(f"   ✓ Menü çekildi: {tarih}")
+    
+    # ADIM 2: Metni formatla
+    print("   📝 Metin formatlanıyor...")
+    formatter = TextFormatter(menu_data)
+    formatted_text = formatter.get_formatted_text()
+    print("   ✓ Metin formatlandı")
+    
+    # ADIM 3: Görsel oluştur
+    print("   🎨 Görsel oluşturuluyor...")
+    
+    template_path = os.path.join(ASSETS_DIR, 'kaynak_gorsel.png')
+    output_filename = f"story_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    output_path = os.path.join(OUTPUT_DIR, output_filename)
+    latest_output_path = os.path.join(OUTPUT_DIR, 'story.png')
+    
+    generator = ImageGenerator(
+        template_path=template_path,
+        output_path=output_path
+    )
+    
+    generator.generate_story(formatted_text)
+    shutil.copy(output_path, latest_output_path)
+    
+    print(f"   ✓ Görsel oluşturuldu: {output_filename}")
+    
+    return True, {
+        'tarih': tarih,
+        'output_path': output_path,
+        'output_filename': output_filename,
+        'latest_output_path': latest_output_path
+    }, None
+
+
 @app.post("/api/generate-story", response_model=StoryResponse)
 async def generate_story():
     """
     Ana endpoint - Menüyü çeker ve Instagram story görseli oluşturur
-    
-    Workflow:
-    1. Yemekhane sitesinden menüyü çek
-    2. Metni formatla
-    3. Görsel oluştur
-    4. Public URL döndür (Instagram API için)
-    
-    n8n bu endpoint'i çağıracak
+    Lokal URL döndürür (Docker network içi kullanım için)
     """
     try:
         print(f"[{datetime.now()}] 🚀 Story oluşturma başlatıldı...")
         
-        # ADIM 1: Menüyü çek
-        print("   📥 Menü çekiliyor...")
-        scraper = MenuScraper()
-        menu_data = scraper.get_todays_menu()
+        success, data, error = await _create_story_image()
         
-        if not menu_data:
+        if not success:
             return StoryResponse(
                 success=False,
                 timestamp=datetime.now().isoformat(),
-                message="Menü çekilemedi. Site erişilemez veya hafta sonu olabilir."
+                message=error
             )
         
-        tarih = menu_data.get('tarih', 'Bilinmiyor')
-        print(f"   ✓ Menü çekildi: {tarih}")
-        
-        # ADIM 2: Metni formatla
-        print("   📝 Metin formatlanıyor...")
-        formatter = TextFormatter(menu_data)
-        formatted_text = formatter.get_formatted_text()
-        print("   ✓ Metin formatlandı")
-        
-        # ADIM 3: Görsel oluştur
-        print("   🎨 Görsel oluşturuluyor...")
-        
-        # Template ve output yolları
-        template_path = os.path.join(ASSETS_DIR, 'kaynak_gorsel.png')
-        output_filename = f"story_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
-        
-        # Ayrıca sabit isimle de kaydet (kolay erişim için)
-        latest_output_path = os.path.join(OUTPUT_DIR, 'story.png')
-        
-        generator = ImageGenerator(
-            template_path=template_path,
-            output_path=output_path
-        )
-        
-        result_path = generator.generate_story(formatted_text)
-        
-        # story.png olarak da kopyala
-        import shutil
-        shutil.copy(output_path, latest_output_path)
-        
-        print(f"   ✓ Görsel oluşturuldu: {output_filename}")
-        
         # Public URL oluştur
-        # Bu URL Instagram Graph API'ye gönderilecek
-        image_url = f"{API_BASE_URL}/static/{output_filename}"
-        latest_url = f"{API_BASE_URL}/static/story.png"
+        image_url = f"{API_BASE_URL}/static/{data['output_filename']}"
         
         print(f"   ✓ Public URL: {image_url}")
         print(f"[{datetime.now()}] ✅ Story başarıyla oluşturuldu!")
@@ -194,8 +203,8 @@ async def generate_story():
         return StoryResponse(
             success=True,
             image_url=image_url,
-            image_path=output_path,
-            tarih=tarih,
+            image_path=data['output_path'],
+            tarih=data['tarih'],
             timestamp=datetime.now().isoformat(),
             message="Story görseli başarıyla oluşturuldu"
         )
@@ -298,54 +307,23 @@ async def generate_story_public():
     try:
         print(f"[{datetime.now()}] 🚀 Story oluşturma (public) başlatıldı...")
         
-        # ADIM 1: Menüyü çek
-        print("   📥 Menü çekiliyor...")
-        scraper = MenuScraper()
-        menu_data = scraper.get_todays_menu()
+        # Story görseli oluştur (ortak fonksiyon)
+        success, data, error = await _create_story_image()
         
-        if not menu_data:
+        if not success:
             return {
                 "success": False,
                 "timestamp": datetime.now().isoformat(),
-                "message": "Menü çekilemedi. Site erişilemez veya hafta sonu olabilir."
+                "message": error
             }
         
-        tarih = menu_data.get('tarih', 'Bilinmiyor')
-        print(f"   ✓ Menü çekildi: {tarih}")
-        
-        # ADIM 2: Metni formatla
-        print("   📝 Metin formatlanıyor...")
-        formatter = TextFormatter(menu_data)
-        formatted_text = formatter.get_formatted_text()
-        print("   ✓ Metin formatlandı")
-        
-        # ADIM 3: Görsel oluştur
-        print("   🎨 Görsel oluşturuluyor...")
-        
-        template_path = os.path.join(ASSETS_DIR, 'kaynak_gorsel.png')
-        output_filename = f"story_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
-        latest_output_path = os.path.join(OUTPUT_DIR, 'story.png')
-        
-        generator = ImageGenerator(
-            template_path=template_path,
-            output_path=output_path
-        )
-        
-        result_path = generator.generate_story(formatted_text)
-        
-        import shutil
-        shutil.copy(output_path, latest_output_path)
-        
-        print(f"   ✓ Görsel oluşturuldu: {output_filename}")
-        
-        # ADIM 4: ImgBB'ye yükle (public URL için)
+        # ImgBB'ye yükle (public URL için)
         print("   ☁️ ImgBB'ye yükleniyor...")
-        public_url = upload_to_imgbb(output_path)
+        public_url = upload_to_imgbb(data["output_path"])
         
         if not public_url:
             # ImgBB başarısızsa lokal URL döndür
-            public_url = f"{API_BASE_URL}/static/{output_filename}"
+            public_url = f"{API_BASE_URL}/static/{data['output_filename']}"
             print(f"   ⚠️ ImgBB kullanılamadı, lokal URL: {public_url}")
         
         print(f"[{datetime.now()}] ✅ Story başarıyla oluşturuldu!")
@@ -353,8 +331,8 @@ async def generate_story_public():
         return {
             "success": True,
             "image_url": public_url,
-            "image_path": output_path,
-            "tarih": tarih,
+            "image_path": data["output_path"],
+            "tarih": data["tarih"],
             "timestamp": datetime.now().isoformat(),
             "message": "Story görseli başarıyla oluşturuldu ve yüklendi"
         }

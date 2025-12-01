@@ -36,27 +36,6 @@ class TextFormatter:
         
         return "\n".join(lines)
     
-    def _get_emoji(self, index, yemek_isim):
-        """Yemek türüne göre emoji döndürür"""
-        yemek_lower = yemek_isim.lower()
-        
-        if 'çorba' in yemek_lower or 'corba' in yemek_lower:
-            return "🍲"
-        elif 'pilav' in yemek_lower or 'makarna' in yemek_lower:
-            return "🍝"
-        elif 'et' in yemek_lower or 'tavuk' in yemek_lower:
-            return "🍖"
-        elif 'börek' in yemek_lower or 'borek' in yemek_lower:
-            return "🥐"
-        elif 'ayran' in yemek_lower or 'süt' in yemek_lower:
-            return "🥛"
-        elif 'salata' in yemek_lower:
-            return "🥗"
-        elif 'tatlı' in yemek_lower or 'tatli' in yemek_lower:
-            return "🍰"
-        else:
-            return "🍽️"
-    
     def _format_no_menu(self):
         """Menü yoksa alternatif mesaj"""
         return "MENU BULUNAMADI"
