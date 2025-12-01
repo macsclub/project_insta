@@ -192,6 +192,95 @@ class TokenRefresher:
             print(f"❌ Hata: {e}", file=sys.stderr)
             return None
     
+    def check_token_status(self):
+        """
+        Mevcut token'ın durumunu kontrol eder
+        
+        Returns:
+            dict: Token bilgileri veya None
+        """
+        print("=" * 70)
+        print("🔍 TOKEN DURUM KONTROLÜ")
+        print("=" * 70)
+        print(f"⏰ {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+        print("=" * 70)
+        print()
+        
+        access_token = self.credentials['facebook']['page_access_token']
+        
+        url = f"{self.base_url}/debug_token"
+        params = {
+            'input_token': access_token,
+            'access_token': access_token
+        }
+        
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json().get('data', {})
+                
+                is_valid = data.get('is_valid', False)
+                expires_at = data.get('expires_at', 0)
+                data_access_expires = data.get('data_access_expires_at', 0)
+                app_id = data.get('app_id', 'Bilinmiyor')
+                scopes = data.get('scopes', [])
+                
+                # Token tipi
+                token_type = data.get('type', 'UNKNOWN')
+                
+                print(f"📊 Token Durumu:")
+                print(f"   Geçerli: {'✅ Evet' if is_valid else '❌ Hayır'}")
+                print(f"   Token Tipi: {token_type}")
+                print(f"   App ID: {app_id}")
+                
+                # Süre bilgisi
+                if expires_at == 0:
+                    print(f"   Token Süresi: ♾️  Süresiz (Never Expires)")
+                else:
+                    expire_date = datetime.fromtimestamp(expires_at)
+                    days_left = (expire_date - datetime.now()).days
+                    print(f"   Token Süresi: {expire_date.strftime('%d.%m.%Y %H:%M')}")
+                    print(f"   Kalan Gün: {days_left} gün")
+                
+                # Veri erişimi süresi
+                if data_access_expires > 0:
+                    data_expire_date = datetime.fromtimestamp(data_access_expires)
+                    data_days_left = (data_expire_date - datetime.now()).days
+                    print(f"   Veri Erişimi Süresi: {data_expire_date.strftime('%d.%m.%Y %H:%M')}")
+                    print(f"   Veri Erişimi Kalan: {data_days_left} gün")
+                    
+                    if data_days_left < 14:
+                        print(f"\n   ⚠️  UYARI: Veri erişimi {data_days_left} gün içinde sona erecek!")
+                        print(f"   Token'ı yenilemeniz önerilir.")
+                
+                # İzinler
+                print(f"\n📋 İzinler ({len(scopes)} adet):")
+                important_scopes = ['instagram_basic', 'instagram_content_publish', 
+                                   'pages_show_list', 'pages_read_engagement']
+                for scope in important_scopes:
+                    status = '✅' if scope in scopes else '❌'
+                    print(f"   {status} {scope}")
+                
+                print()
+                print("=" * 70)
+                
+                return {
+                    'is_valid': is_valid,
+                    'expires_at': expires_at,
+                    'data_access_expires_at': data_access_expires,
+                    'token_type': token_type,
+                    'scopes': scopes
+                }
+            else:
+                error_data = response.json()
+                print(f"❌ Hata: {error_data.get('error', {}).get('message', 'Bilinmeyen hata')}")
+                return None
+                
+        except Exception as e:
+            print(f"❌ Hata: {e}", file=sys.stderr)
+            return None
+    
     def refresh_token(self, short_lived_token):
         """
         Token yenileme işleminin tamamı
@@ -261,32 +350,68 @@ class TokenRefresher:
 def main():
     """Ana fonksiyon"""
     print()
-    print("🔐 Facebook/Instagram Token Yenileme Aracı")
+    print("🔐 Facebook/Instagram Token Yönetim Aracı")
     print()
     
+    # Argüman kontrolü
     if len(sys.argv) > 1:
-        # Komut satırından token verildi
-        short_lived_token = sys.argv[1]
+        arg = sys.argv[1]
+        
+        # Token durumu kontrolü
+        if arg in ['--check', '-c', 'check', 'status']:
+            refresher = TokenRefresher()
+            result = refresher.check_token_status()
+            return 0 if result and result.get('is_valid') else 1
+        
+        # Yardım
+        elif arg in ['--help', '-h', 'help']:
+            print("Kullanım:")
+            print("  python refresh_token.py              # Interaktif token yenileme")
+            print("  python refresh_token.py --check      # Token durumunu kontrol et")
+            print("  python refresh_token.py <token>      # Verilen token ile yenile")
+            print()
+            return 0
+        
+        # Token olarak kabul et
+        else:
+            short_lived_token = arg
     else:
-        # Kullanıcıdan token iste
-        print("📝 Kısa ömürlü token'ı giriniz:")
-        print()
-        print("1. https://developers.facebook.com/tools/explorer/ adresine gidin")
-        print("2. Uygulamanızı seçin")
-        print("3. 'Get Page Access Token' butonuna tıklayın")
-        print("4. Gerekli izinleri seçin:")
-        print("   - pages_show_list")
-        print("   - pages_read_engagement")
-        print("   - instagram_basic")
-        print("   - instagram_content_publish")
-        print("5. 'Generate Access Token' butonuna tıklayın")
-        print("6. Token'ı kopyalayıp buraya yapıştırın")
+        # Kullanıcıdan seçim iste
+        print("Ne yapmak istiyorsunuz?")
+        print("  1. Token durumunu kontrol et")
+        print("  2. Token yenile (yeni token ile)")
         print()
         
-        short_lived_token = input("Token: ").strip()
+        choice = input("Seçiminiz (1/2): ").strip()
         
-        if not short_lived_token:
-            print("❌ Token boş olamaz!")
+        if choice == '1':
+            refresher = TokenRefresher()
+            result = refresher.check_token_status()
+            return 0 if result and result.get('is_valid') else 1
+        
+        elif choice == '2':
+            print()
+            print("📝 Kısa ömürlü token'ı giriniz:")
+            print()
+            print("1. https://developers.facebook.com/tools/explorer/ adresine gidin")
+            print("2. Uygulamanızı seçin")
+            print("3. 'Get Page Access Token' butonuna tıklayın")
+            print("4. Gerekli izinleri seçin:")
+            print("   - pages_show_list")
+            print("   - pages_read_engagement")
+            print("   - instagram_basic")
+            print("   - instagram_content_publish")
+            print("5. 'Generate Access Token' butonuna tıklayın")
+            print("6. Token'ı kopyalayıp buraya yapıştırın")
+            print()
+            
+            short_lived_token = input("Token: ").strip()
+            
+            if not short_lived_token:
+                print("❌ Token boş olamaz!")
+                return 1
+        else:
+            print("❌ Geçersiz seçim!")
             return 1
     
     # Token yenile
