@@ -20,15 +20,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Uygulama dosyaları
 COPY *.py .
 
-# Output dizinini oluştur
-RUN mkdir -p /app/output
+# Output ve assets dizinlerini oluştur
+RUN mkdir -p /app/output /app/assets
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV ASSETS_DIR=/app/assets
 ENV OUTPUT_DIR=/app/output
 ENV API_BASE_URL=http://localhost:8000
-ENV FONT_PATH=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
+ENV TEMPLATE_PATH=/app/assets/kaynak_gorsel.png
+ENV FONT_PATH=/app/assets/LeagueSpartan-SemiBold.ttf
 
 # Port
 EXPOSE 8000

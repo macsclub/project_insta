@@ -12,19 +12,18 @@ BASE_DIR = Path(__file__).resolve().parent
 # Menü URL'si
 MENU_URL = os.environ.get('MENU_URL', "https://yemekhane.ogu.edu.tr/")
 
-# Görsel ayarları
-IMAGE_WIDTH = int(os.environ.get('IMAGE_WIDTH', 900))
-IMAGE_HEIGHT = int(os.environ.get('IMAGE_HEIGHT', 1600))
+# Görsel ayarları - 2160x3840 (Instagram Story 1080x1920'nin 2x'i)
+IMAGE_WIDTH = int(os.environ.get('IMAGE_WIDTH', 2160))
+IMAGE_HEIGHT = int(os.environ.get('IMAGE_HEIGHT', 3840))
 
 # Asset ve Output dizinleri (Docker uyumlu)
 ASSETS_DIR = os.environ.get('ASSETS_DIR', str(BASE_DIR.parent / '2_assets'))
 OUTPUT_DIR = os.environ.get('OUTPUT_DIR', str(BASE_DIR.parent / '5_tests' / 'output'))
 
 # Template dosya yolu
-TEMPLATE_PATH = os.environ.get('TEMPLATE_PATH', os.path.join(ASSETS_DIR, 'kaynak_gorsel.jpg'))
+TEMPLATE_PATH = os.environ.get('TEMPLATE_PATH', os.path.join(ASSETS_DIR, 'kaynak_gorsel.png'))
 
-# Font ayarları - Linux/Windows uyumlu
-# Docker'da /usr/share/fonts altında, Windows'ta arial.ttf
+# Font ayarları - LeagueSpartan-SemiBold
 def get_font_path():
     """Platform uyumlu font yolu döndürür"""
     # Önce environment variable kontrol et
@@ -32,42 +31,46 @@ def get_font_path():
     if env_font and os.path.exists(env_font):
         return env_font
     
-    # Proje içindeki font
-    project_font = os.path.join(ASSETS_DIR, 'fonts', 'Roboto-Bold.ttf')
+    # Proje içindeki ana font - LeagueSpartan
+    project_font = os.path.join(ASSETS_DIR, 'LeagueSpartan-SemiBold.ttf')
     if os.path.exists(project_font):
         return project_font
     
-    # Linux fontları
+    # Docker için kopyalanmış font
+    docker_font = '/app/assets/LeagueSpartan-SemiBold.ttf'
+    if os.path.exists(docker_font):
+        return docker_font
+    
+    # Linux fallback fontları
     linux_fonts = [
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-        '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
     ]
     for font in linux_fonts:
         if os.path.exists(font):
             return font
     
-    # Windows fontları
+    # Windows fallback
     windows_fonts = [
         'C:/Windows/Fonts/arial.ttf',
-        'C:/Windows/Fonts/segoeui.ttf',
-        'arial.ttf',  # System path'te olabilir
+        'arial.ttf',
     ]
     for font in windows_fonts:
         if os.path.exists(font):
             return font
     
-    # Hiçbiri yoksa None döndür (Pillow default font kullanacak)
     return None
 
 FONT_PATH = get_font_path()
-FONT_SIZE = int(os.environ.get('FONT_SIZE', 40))
+# Font boyutu - 1483px genişliğindeki beyaz alan için optimize edildi
+FONT_SIZE = int(os.environ.get('FONT_SIZE', 120))
 FONT_COLOR = (0, 0, 0)  # Siyah
 
-# Metin pozisyon ayarları
-TEXT_START_X = int(os.environ.get('TEXT_START_X', 100))
-TEXT_START_Y = int(os.environ.get('TEXT_START_Y', 550))
-LINE_SPACING = int(os.environ.get('LINE_SPACING', 55))
+# Metin pozisyon ayarları - 2160x3840 template için
+# Yazılar template'in ortasında, dikey olarak merkezlenecek
+TEXT_START_X = int(os.environ.get('TEXT_START_X', 0))  # Yatay ortalama için 0
+TEXT_START_Y = int(os.environ.get('TEXT_START_Y', 1600))  # Dikey başlangıç
+LINE_SPACING = int(os.environ.get('LINE_SPACING', 180))  # Satır aralığı
 
 # API ayarları
 API_BASE_URL = os.environ.get('API_BASE_URL', 'http://localhost:8000')

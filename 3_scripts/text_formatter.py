@@ -12,38 +12,27 @@ class TextFormatter:
         self.menu_data = menu_data
     
     def format_for_story(self):
-        """Menü verisini Instagram hikayesi için formatlar"""
+        """Menü verisini Instagram hikayesi için formatlar - Sadece yemek isimleri"""
         
         if not self.menu_data or not self.menu_data.get('yemekler'):
             return self._format_no_menu()
         
-        # Başlık
-        tarih = self.menu_data.get('tarih', 'Tarih bilinmiyor')
-        
-        # Emoji ekle
         lines = []
-        lines.append("BUGÜNÜN MENÜSÜ")
-        lines.append(f"📅 {tarih}")
-        lines.append("")  # Boş satır
         
-        # Yemekleri ekle
+        # Sadece yemekleri ekle - emoji, başlık, tarih yok
         yemekler = self.menu_data.get('yemekler', [])
         
-        for i, yemek in enumerate(yemekler, 1):
+        for yemek in yemekler:
             isim = yemek.get('isim', '').strip()
             
-            # Karbonhidrat bilgisini temizle (görsel kalabalığı önlemek için)
+            # Karbonhidrat bilgisini temizle
             # "ETLİ MEVSİM TÜRLÜSÜ Karbonhidrat: 12 g" -> "ETLİ MEVSİM TÜRLÜSÜ"
             if 'Karbonhidrat:' in isim:
                 isim = isim.split('Karbonhidrat:')[0].strip()
             
-            # Emoji ekle
-            emoji = self._get_emoji(i, isim)
-            lines.append(f"{emoji} {isim}")
-        
-        # Footer
-        lines.append("")
-        lines.append("AFİYET OLSUN! 🍽️")
+            # Sadece yemek ismini ekle (emoji yok)
+            if isim:
+                lines.append(isim)
         
         return "\n".join(lines)
     
@@ -70,15 +59,7 @@ class TextFormatter:
     
     def _format_no_menu(self):
         """Menü yoksa alternatif mesaj"""
-        return """BUGÜNÜN MENÜSÜ
-
-⚠️ Bugün için menü
-   bulunamadı
-
-Hafta sonu veya tatil
-günü olabilir.
-
-MACS Kulübü 🎓"""
+        return "MENU BULUNAMADI"
     
     def get_formatted_text(self):
         """Formatlanmış metni döndürür"""

@@ -163,7 +163,7 @@ async def generate_story():
         print("   🎨 Görsel oluşturuluyor...")
         
         # Template ve output yolları
-        template_path = os.path.join(ASSETS_DIR, 'kaynak_gorsel.jpg')
+        template_path = os.path.join(ASSETS_DIR, 'kaynak_gorsel.png')
         output_filename = f"story_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         
@@ -322,7 +322,7 @@ async def generate_story_public():
         # ADIM 3: Görsel oluştur
         print("   🎨 Görsel oluşturuluyor...")
         
-        template_path = os.path.join(ASSETS_DIR, 'kaynak_gorsel.jpg')
+        template_path = os.path.join(ASSETS_DIR, 'kaynak_gorsel.png')
         output_filename = f"story_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         latest_output_path = os.path.join(OUTPUT_DIR, 'story.png')
