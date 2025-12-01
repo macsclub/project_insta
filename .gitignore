@@ -19,6 +19,10 @@ api_credentials.json
 5_tests/output/menu.json
 5_tests/output/formatted_text.txt
 
+# Docker output
+output/*.png
+output/*.jpg
+
 # IDE
 .vscode/
 .idea/

@@ -6,13 +6,23 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import sys
 
+# Config'den ayarları al
+try:
+    from config import FONT_PATH, FONT_SIZE, IMAGE_WIDTH, IMAGE_HEIGHT, ASSETS_DIR
+except ImportError:
+    FONT_PATH = None
+    FONT_SIZE = 40
+    IMAGE_WIDTH = 900
+    IMAGE_HEIGHT = 1600
+    ASSETS_DIR = '../2_assets'
+
 
 class ImageGenerator:
     def __init__(self, template_path=None, output_path='../5_tests/output/story.png'):
-        self.template_path = template_path or '../2_assets/kaynak_gorsel.jpg'
+        self.template_path = template_path or os.path.join(ASSETS_DIR, 'kaynak_gorsel.jpg')
         self.output_path = output_path
-        self.width = 900
-        self.height = 1600
+        self.width = IMAGE_WIDTH
+        self.height = IMAGE_HEIGHT
         
     def create_template(self):
         """Örnek şablon oluşturur (gerçek şablon yoksa)"""
@@ -78,14 +88,48 @@ class ImageGenerator:
         """Görsel üzerine metin yazar"""
         draw = ImageDraw.Draw(img)
         
-        # Font ayarları
-        try:
-            if font_path and os.path.exists(font_path):
-                font = ImageFont.truetype(font_path, 40)
-            else:
-                # Windows'ta Arial kullan
-                font = ImageFont.truetype("arial.ttf", 40)
-        except:
+        # Font ayarları - config'den veya parametre olarak
+        font = None
+        font_size = FONT_SIZE
+        
+        # 1. Parametre olarak verilen font
+        if font_path and os.path.exists(font_path):
+            try:
+                font = ImageFont.truetype(font_path, font_size)
+            except Exception:
+                pass
+        
+        # 2. Config'deki font
+        if font is None and FONT_PATH and os.path.exists(FONT_PATH):
+            try:
+                font = ImageFont.truetype(FONT_PATH, font_size)
+            except Exception:
+                pass
+        
+        # 3. Windows fallback
+        if font is None:
+            for win_font in ['arial.ttf', 'C:/Windows/Fonts/arial.ttf']:
+                try:
+                    font = ImageFont.truetype(win_font, font_size)
+                    break
+                except Exception:
+                    continue
+        
+        # 4. Linux fallback
+        if font is None:
+            linux_fonts = [
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+                '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+            ]
+            for linux_font in linux_fonts:
+                try:
+                    font = ImageFont.truetype(linux_font, font_size)
+                    break
+                except Exception:
+                    continue
+        
+        # 5. Hiçbiri yoksa default (çok küçük olacak ama çalışır)
+        if font is None:
             print("⚠️  Font yüklenemedi, varsayılan font kullanılıyor")
             font = ImageFont.load_default()
         
