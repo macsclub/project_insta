@@ -4,12 +4,35 @@ Text Formatter - Menü metnini Instagram hikayesi için formatlar
 
 import json
 import sys
+import re
 from datetime import datetime
 
 
 class TextFormatter:
     def __init__(self, menu_data):
         self.menu_data = menu_data
+    
+    def _turkish_upper(self, text):
+        """Türkçe karakterleri doğru şekilde büyük harfe çevirir"""
+        # Türkçe karakter dönüşüm haritası
+        turkish_map = {
+            'i': 'İ',
+            'ı': 'I',
+            'ğ': 'Ğ',
+            'ü': 'Ü',
+            'ş': 'Ş',
+            'ö': 'Ö',
+            'ç': 'Ç'
+        }
+        
+        result = []
+        for char in text:
+            if char in turkish_map:
+                result.append(turkish_map[char])
+            else:
+                result.append(char.upper())
+        
+        return ''.join(result)
     
     def format_for_story(self):
         """Menü verisini Instagram hikayesi için formatlar - Sadece yemek isimleri"""
@@ -25,13 +48,16 @@ class TextFormatter:
         for yemek in yemekler:
             isim = yemek.get('isim', '').strip()
             
-            # Karbonhidrat bilgisini temizle
+            # Karbonhidrat bilgisini temizle (hem büyük hem küçük harf)
             # "ETLİ MEVSİM TÜRLÜSÜ Karbonhidrat: 12 g" -> "ETLİ MEVSİM TÜRLÜSÜ"
-            if 'Karbonhidrat:' in isim:
-                isim = isim.split('Karbonhidrat:')[0].strip()
+            # "BULGUR PİLAVI karbonhidrat: 30 gr" -> "BULGUR PİLAVI"
+            if 'karbonhidrat:' in isim.lower():
+                # Case-insensitive temizleme
+                isim = re.split(r'[Kk]arbonhidrat:', isim)[0].strip()
             
-            # Sadece yemek ismini ekle (emoji yok)
+            # Yemek ismini Türkçe kurallarına göre büyük harfe çevir
             if isim:
+                isim = self._turkish_upper(isim)
                 lines.append(isim)
         
         return "\n".join(lines)
@@ -65,7 +91,9 @@ def main():
             "yemekler": [
                 {"isim": "ERİŞTELİ YEŞİL MERCİMEK ÇORBA", "kalori": "(170 kcal)"},
                 {"isim": "ETLİ MEVSİM TÜRLÜSÜ Karbonhidrat: 12 g", "kalori": "(295 kcal)"},
-                {"isim": "PATATESLİ BÖREK Karbonhidrat: 45 gr", "kalori": "(420 kcal)"},
+                {"isim": "BULGUR PİLAVI karbonhidrat: 30 gr", "kalori": "(180 kcal)"},
+                {"isim": "peynirli/patatesli börek", "kalori": "(350 kcal)"},
+                {"isim": "şekerlı pılav", "kalori": "(250 kcal)"},
                 {"isim": "AYRAN Karbonhidrat: 4 gr", "kalori": "(67 kcal)"}
             ],
             "menu_tipi": "Standart Menü"

@@ -1,0 +1,23 @@
+{
+  "tarih": "25 Ara. Perşembe",
+  "yemekler": [
+    {
+      "isim": "KIRMIZI MERCİMEK ÇORBASI",
+      "kalori": "(150 kcal)"
+    },
+    {
+      "isim": "FIRINDA TAVUK BUT",
+      "kalori": "(580 kcal)"
+    },
+    {
+      "isim": "peynirli/patatesli börek",
+      "kalori": "(380 kcal)"
+    },
+    {
+      "isim": "ŞEKERLİ PİLAV Karbonhidrat: 35 gr",
+      "kalori": "(260 kcal)"
+    }
+  ],
+  "tarih_timestamp": "2025-12-25T00:00:00.000000",
+  "menu_tipi": "Standart Menü"
+}
